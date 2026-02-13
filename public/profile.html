@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Creator Profile - IJB Innovative Ventures</title>
+  <meta name="description" content="View creator profile and browse their digital content on IJB Innovative Ventures.">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="stylesheet" href="styles.css">
+  <script src="utils.js" defer></script>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container">
+      <div class="nav-brand">
+        <h1>IJB Innovative Ventures</h1>
+      </div>
+      <div class="nav-links">
+        <a href="/" class="nav-link">Browse</a>
+        <a href="/creator" class="nav-link">For Creators</a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container" style="padding-top:var(--space-xl);">
+    <div id="profileContent">
+      <div class="loading">Loading profile...</div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-bottom">
+        <p>&copy; <span class="footer-year"></span> IJB Innovative Ventures. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('.footer-year').forEach(el => el.textContent = new Date().getFullYear());
+      loadProfile();
+    });
+
+    async function loadProfile() {
+      const pathParts = window.location.pathname.split('/');
+      const username = pathParts[pathParts.length - 1];
+      if (!username) {
+        document.getElementById('profileContent').innerHTML = '<div class="alert alert-error">Profile not found.</div>';
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_URL}/creators/profile/${encodeURIComponent(username)}`);
+        if (!res.ok) {
+          document.getElementById('profileContent').innerHTML = '<div class="alert alert-error">Creator not found.</div>';
+          return;
+        }
+        const data = await res.json();
+        const c = data.creator;
+        const content = data.content || [];
+
+        const verifiedHtml = c.isVerified
+          ? `<span class="verified-badge" style="width:20px;height:20px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>`
+          : '';
+
+        document.title = `${c.displayName || c.username} - IJB Innovative Ventures`;
+
+        document.getElementById('profileContent').innerHTML = `
+          <div class="section" style="text-align:center;padding:var(--space-2xl);">
+            <div style="width:80px;height:80px;background:linear-gradient(135deg,var(--purple),var(--turquoise));border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto var(--space-lg);font-size:2rem;color:white;font-weight:700;">
+              ${(c.displayName || c.username).charAt(0).toUpperCase()}
+            </div>
+            <h2 style="font-size:1.5rem;margin-bottom:var(--space-xs);">${escapeHtml(c.displayName || c.username)} ${verifiedHtml}</h2>
+            <p style="color:var(--gray-600);margin-bottom:var(--space-sm);">@${escapeHtml(c.username)}</p>
+            ${c.bio ? `<p style="max-width:600px;margin:0 auto var(--space-md);color:var(--dark-700);">${escapeHtml(c.bio)}</p>` : ''}
+            <div style="display:flex;gap:var(--space-xl);justify-content:center;margin-top:var(--space-lg);">
+              <div><strong style="font-size:1.3rem;color:var(--turquoise);">${content.length}</strong><br><span style="font-size:0.85rem;color:var(--gray-600);">Uploads</span></div>
+              <div><strong style="font-size:1.3rem;color:var(--turquoise);">${data.totalDownloads || 0}</strong><br><span style="font-size:0.85rem;color:var(--gray-600);">Downloads</span></div>
+              <div><strong style="font-size:1.3rem;color:var(--purple);">Joined ${formatDate(c.createdAt)}</strong><br><span style="font-size:0.85rem;color:var(--gray-600);">Member since</span></div>
+            </div>
+          </div>
+
+          <h2 style="margin:var(--space-xl) 0 var(--space-lg);font-size:1.3rem;">Content by ${escapeHtml(c.displayName || c.username)}</h2>
+
+          ${content.length > 0 ? `
+            <div class="content-grid">
+              ${content.map(item => `
+                <div class="content-card" onclick="window.location.href='/?search=${encodeURIComponent(item.title)}'">
+                  <div class="card-thumbnail">
+                    ${item.thumbnailPath ? `<img src="/thumbnails/${escapeHtml(item.thumbnailPath)}" alt="${escapeHtml(item.title)}" />` : `<div class="category-icon">${getCategoryIcon(item.category)}</div>`}
+                  </div>
+                  <div class="card-body">
+                    <h3>${escapeHtml(item.title)}</h3>
+                    <div class="description">${escapeHtml(item.description || '')}</div>
+                    <div class="meta">
+                      <span class="category-badge">${escapeHtml(item.category)}</span>
+                      ${item.averageRating > 0 ? `<div class="rating-display">${renderStars(item.averageRating, '0.85rem')}</div>` : ''}
+                      <span>${item.downloadCount || 0} downloads</span>
+                    </div>
+                    <div class="card-footer">
+                      <span class="price-tag">${formatCurrency(item.priceZmw)}</span>
+                    </div>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          ` : '<p style="color:var(--gray-600);">This creator hasn\'t uploaded any content yet.</p>'}
+        `;
+      } catch (error) {
+        document.getElementById('profileContent').innerHTML = '<div class="alert alert-error">Error loading profile.</div>';
+      }
+    }
+  </script>
+</body>
+</html>

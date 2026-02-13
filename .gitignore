@@ -1,0 +1,10 @@
+.env
+node_modules/
+uploads/
+logs/
+*.sqlite
+database.sqlite
+.DS_Store
+Thumbs.db
+*.png
+nul

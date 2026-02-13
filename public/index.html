@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IJB Innovative Ventures - Zambia's Digital Marketplace</title>
+  <meta name="description" content="Discover and download amazing digital content from Zambian creators. Music, books, art, videos, and more. Creators keep 85% of every sale!">
+  <meta name="keywords" content="digital marketplace, Zambia, download, music, books, art, creators, pay-per-download">
+  <meta property="og:title" content="IJB Innovative Ventures - Zambia's Digital Marketplace">
+  <meta property="og:description" content="Discover and download amazing digital content from Zambian creators.">
+  <meta property="og:type" content="website">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="stylesheet" href="styles.css">
+  <script src="utils.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container">
+      <div class="nav-brand">
+        <h1>IJB Innovative Ventures</h1>
+      </div>
+      <div class="nav-links" id="navLinks">
+        <a href="/" class="nav-link active">Browse</a>
+        <a href="#" id="downloadsLink" class="nav-link hidden">My Downloads</a>
+        <a href="#" id="creatorLoginLink" class="nav-link">Creator Login</a>
+        <a href="#" id="adminLoginLink" class="nav-link">Admin</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="container">
+      <h2>Discover Amazing Digital Content</h2>
+      <p>Support Zambian creators directly &mdash; Download music, books, art, and more starting from ZMW 1.00</p>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="search-section">
+      <div class="search-bar">
+        <input type="text" id="searchInput" placeholder="Search content..." />
+        <select id="categoryFilter">
+          <option value="all">All Categories</option>
+          <option value="Music">Music</option>
+          <option value="Books">Books</option>
+          <option value="Art">Art</option>
+          <option value="Videos">Videos</option>
+          <option value="Documents">Documents</option>
+          <option value="Other">Other</option>
+        </select>
+        <select id="sortFilter">
+          <option value="newest">Newest</option>
+          <option value="popular">Most Popular</option>
+          <option value="price_low">Price: Low to High</option>
+          <option value="price_high">Price: High to Low</option>
+          <option value="rating">Highest Rated</option>
+        </select>
+        <button id="searchButton" class="btn-primary">Search</button>
+      </div>
+      <div class="sort-controls">
+        <div class="filter-group">
+          <label>Price:</label>
+          <input type="number" id="minPrice" placeholder="Min" min="1" />
+          <span>-</span>
+          <input type="number" id="maxPrice" placeholder="Max" />
+        </div>
+        <div class="filter-group">
+          <label>Min Rating:</label>
+          <select id="ratingFilter">
+            <option value="">Any</option>
+            <option value="4">4+ Stars</option>
+            <option value="3">3+ Stars</option>
+            <option value="2">2+ Stars</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <section class="content-grid" id="contentGrid">
+    </section>
+
+    <div class="pagination" id="pagination"></div>
+  </main>
+
+  <!-- Creator Login Modal -->
+  <div id="creatorLoginModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Creator Login</h2>
+        <button class="close" onclick="closeCreatorLogin()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form onsubmit="handleCreatorLogin(event)">
+          <div class="form-group">
+            <label>Username</label>
+            <input type="text" id="creatorUsername" required />
+          </div>
+          <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="creatorPassword" required />
+          </div>
+          <button type="submit" class="btn-primary btn-large">Login</button>
+          <div class="form-toggle">
+            Don't have an account? <a href="#" onclick="showCreatorRegister()">Register here</a>
+          </div>
+          <div class="form-toggle">
+            <a href="#" onclick="showForgotPassword()">Forgot password?</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Creator Register Modal -->
+  <div id="creatorRegisterModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Creator Registration</h2>
+        <button class="close" onclick="closeCreatorRegister()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form onsubmit="handleCreatorRegister(event)">
+          <div class="form-group">
+            <label>Username</label>
+            <input type="text" id="regUsername" required minlength="3" />
+          </div>
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="regEmail" required />
+          </div>
+          <div class="form-group">
+            <label>Display Name</label>
+            <input type="text" id="regDisplayName" />
+          </div>
+          <div class="form-group">
+            <label>Password (min 6 characters)</label>
+            <input type="password" id="regPassword" required minlength="6" />
+          </div>
+          <button type="submit" class="btn-primary btn-large">Register</button>
+          <div class="form-toggle">
+            Already have an account? <a href="#" onclick="showCreatorLogin()">Login here</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin Login Modal -->
+  <div id="adminLoginModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Admin Login</h2>
+        <button class="close" onclick="closeAdminLogin()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form onsubmit="handleAdminLogin(event)">
+          <div class="form-group">
+            <label>Username</label>
+            <input type="text" id="adminUsername" required />
+          </div>
+          <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="adminPassword" required />
+          </div>
+          <button type="submit" class="btn-primary btn-large">Login as Admin</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Content Detail Modal -->
+  <div id="contentDetailModal" class="modal">
+    <div class="modal-content" style="max-width:650px;">
+      <div class="modal-header" id="detailModalHeader">
+        <h2>Content Details</h2>
+        <button class="close" onclick="closeDetailModal()">&times;</button>
+      </div>
+      <div class="modal-body" id="detailModalBody"></div>
+    </div>
+  </div>
+
+  <!-- Payment Modal -->
+  <div id="paymentModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Purchase Content</h2>
+        <button class="close" onclick="closePaymentModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="modalContentDetails"></div>
+        <div class="payment-form">
+          <h3 style="margin-bottom:var(--space-sm);font-size:1rem;">Select Payment Method</h3>
+          <div class="payment-methods">
+            <label class="payment-option">
+              <input type="radio" name="paymentMethod" value="mtn_momo" />
+              <div class="payment-card">MTN Mobile Money</div>
+            </label>
+            <label class="payment-option">
+              <input type="radio" name="paymentMethod" value="airtel_money" />
+              <div class="payment-card">Airtel Money</div>
+            </label>
+            <label class="payment-option">
+              <input type="radio" name="paymentMethod" value="zamtel" />
+              <div class="payment-card">Zamtel</div>
+            </label>
+            <label class="payment-option">
+              <input type="radio" name="paymentMethod" value="visa" />
+              <div class="payment-card">Visa Card</div>
+            </label>
+          </div>
+
+          <div id="phoneNumberField" class="hidden">
+            <label>Phone Number</label>
+            <input type="tel" id="phoneNumber" placeholder="0977123456" />
+          </div>
+
+          <div id="cardDetailsField" class="hidden">
+            <div class="visa-redirect-notice">
+              You will be redirected to our secure payment partner to complete your card payment.
+            </div>
+          </div>
+
+          <div class="price-display" id="priceDisplay">
+            <strong>Total: ZMW 2.00</strong>
+          </div>
+
+          <button onclick="processPayment()" class="btn-primary btn-large">Pay & Download</button>
+        </div>
+
+        <div id="paymentStatus" class="hidden"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Report Modal -->
+  <div id="reportModal" class="modal">
+    <div class="modal-content" style="max-width:450px;">
+      <div class="modal-header">
+        <h2>Report Content</h2>
+        <button class="close" onclick="closeReportModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form onsubmit="submitReport(event)">
+          <input type="hidden" id="reportContentId" />
+          <div class="form-group">
+            <label>Reason</label>
+            <select id="reportReason" required>
+              <option value="">Select a reason</option>
+              <option value="Copyright violation">Copyright violation</option>
+              <option value="Inappropriate content">Inappropriate content</option>
+              <option value="Misleading description">Misleading description</option>
+              <option value="Spam or scam">Spam or scam</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Description (optional)</label>
+            <textarea id="reportDescription" placeholder="Provide additional details..."></textarea>
+          </div>
+          <div class="form-group">
+            <label>Your Email (optional)</label>
+            <input type="email" id="reportEmail" placeholder="email@example.com" />
+          </div>
+          <button type="submit" class="btn-primary btn-large">Submit Report</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Downloads Modal -->
+  <div id="downloadsModal" class="modal">
+    <div class="modal-content" style="max-width:550px;">
+      <div class="modal-header">
+        <h2>My Downloads</h2>
+        <button class="close" onclick="closeDownloadsModal()">&times;</button>
+      </div>
+      <div class="modal-body" id="downloadsModalBody"></div>
+    </div>
+  </div>
+
+  <!-- Forgot Password Modal -->
+  <div id="forgotPasswordModal" class="modal">
+    <div class="modal-content" style="max-width:450px;">
+      <div class="modal-header">
+        <h2>Forgot Password</h2>
+        <button class="close" onclick="closeForgotPassword()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="margin-bottom:var(--space-lg);color:var(--gray-600);font-size:0.9rem;">Enter your email address and we'll send you a link to reset your password.</p>
+        <form onsubmit="handleForgotPassword(event)">
+          <div class="form-group">
+            <label>Email Address</label>
+            <input type="email" id="forgotEmail" required />
+          </div>
+          <button type="submit" class="btn-primary btn-large">Send Reset Link</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <h3>IJB Innovative Ventures</h3>
+          <p>Zambia's premier digital marketplace. Empowering creators, one download at a time. Creators keep 85% of every sale!</p>
+        </div>
+        <div class="footer-links">
+          <h4>Quick Links</h4>
+          <ul>
+            <li><a href="/">Browse Content</a></li>
+            <li><a href="/creator">Become a Creator</a></li>
+            <li><a href="/terms">Terms of Service</a></li>
+            <li><a href="/privacy">Privacy Policy</a></li>
+          </ul>
+        </div>
+        <div class="footer-contact">
+          <h4>Contact</h4>
+          <p>Lusaka, Zambia</p>
+          <p>info@ijbventures.com</p>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; <span id="footerYear"></span> IJB Innovative Ventures. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script>document.getElementById('footerYear').textContent = new Date().getFullYear();</script>
+</body>
+</html>

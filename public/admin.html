@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - IJB Innovative Ventures</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="utils.js" defer></script>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container">
+      <div class="nav-brand">
+        <h1>IJB Innovative Ventures</h1>
+      </div>
+      <div class="nav-links">
+        <a href="/" class="nav-link">Browse</a>
+        <a href="/admin" class="nav-link active">Admin Dashboard</a>
+        <a href="#" class="nav-link" onclick="logout()">Logout</a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container dashboard-container">
+    <div class="welcome-message">
+      <h2>Admin Dashboard</h2>
+      <p>Manage platform content, creators, and monitor performance</p>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card"><h3>Total Creators</h3><div class="value" id="totalCreators">0</div></div>
+      <div class="stat-card"><h3>Total Content</h3><div class="value" id="totalContent">0</div></div>
+      <div class="stat-card"><h3>Transactions</h3><div class="value" id="totalTransactions">0</div></div>
+      <div class="stat-card"><h3>Total Revenue</h3><div class="value" id="totalRevenue">ZMW 0.00</div></div>
+      <div class="stat-card"><h3>Platform Earnings</h3><div class="value" id="platformEarnings">ZMW 0.00</div></div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" onclick="showAdminTab('creators')">Creators</button>
+      <button class="tab" onclick="showAdminTab('content')">Content</button>
+      <button class="tab" onclick="showAdminTab('transactions')">Transactions</button>
+      <button class="tab" onclick="showAdminTab('withdrawals')">Withdrawals</button>
+      <button class="tab" onclick="showAdminTab('reports')">Reports</button>
+      <button class="tab" onclick="showAdminTab('charts')">Analytics</button>
+    </div>
+
+    <div id="creatorsTab" class="tab-content active">
+      <div class="section"><h2>Manage Creators</h2><div class="table-wrapper" id="creatorsTableContainer"><p class="loading">Loading...</p></div></div>
+    </div>
+
+    <div id="contentTab" class="tab-content">
+      <div class="section"><h2>Manage Content</h2><div class="table-wrapper" id="contentTableContainer"><p class="loading">Loading...</p></div></div>
+    </div>
+
+    <div id="transactionsTab" class="tab-content">
+      <div class="section"><h2>Recent Transactions</h2><div class="table-wrapper" id="transactionsTableContainer"><p class="loading">Loading...</p></div></div>
+    </div>
+
+    <div id="withdrawalsTab" class="tab-content">
+      <div class="section"><h2>Withdrawal Requests</h2><div class="table-wrapper" id="withdrawalsTableContainer"><p class="loading">Loading...</p></div></div>
+    </div>
+
+    <div id="reportsTab" class="tab-content">
+      <div class="section"><h2>Content Reports</h2><div class="table-wrapper" id="reportsTableContainer"><p class="loading">Loading...</p></div></div>
+    </div>
+
+    <div id="chartsTab" class="tab-content">
+      <div class="section">
+        <h2>Platform Analytics</h2>
+        <div class="charts-grid">
+          <div class="chart-container"><canvas id="revenueChart"></canvas></div>
+          <div class="chart-container"><canvas id="categoryChart"></canvas></div>
+        </div>
+        <div class="chart-container" style="margin-top:var(--space-xl);"><canvas id="topCreatorsChart"></canvas></div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-bottom">
+        <p>&copy; <span class="footer-year"></span> IJB Innovative Ventures. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    const adminToken = localStorage.getItem('adminToken');
+    if (!adminToken) window.location.href = '/';
+
+    let revenueChart, categoryChart, topCreatorsChart;
+    let platformStats = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('.footer-year').forEach(el => el.textContent = new Date().getFullYear());
+      loadStats();
+      loadCreators();
+      loadContent();
+      loadTransactions();
+      loadWithdrawals();
+      loadReports();
+    });
+
+    function showAdminTab(tabName) {
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.getElementById(tabName + 'Tab').classList.add('active');
+      event.target.classList.add('active');
+      if (tabName === 'charts') initAdminCharts();
+    }
+
+    async function loadStats() {
+      try {
+        const res = await fetch(`${API_URL}/admin/stats`, { headers: { 'Authorization': `Bearer ${adminToken}` } });
+        const stats = await res.json();
+        platformStats = stats;
+        document.getElementById('totalCreators').textContent = stats.totalCreators;
+        document.getElementById('totalContent').textContent = stats.totalContent;
+        document.getElementById('totalTransactions').textContent = stats.totalTransactions;
+        document.getElementById('totalRevenue').textContent = formatCurrency(stats.totalRevenue);
+        document.getElementById('platformEarnings').textContent = formatCurrency(stats.platformEarnings);
+      } catch (error) { showToast('Error loading stats', 'error'); }
+    }
+
+    async function loadCreators() {
+      try {
+        const res = await fetch(`${API_URL}/admin/creators`, { headers: { 'Authorization': `Bearer ${adminToken}` } });
+        const creators = await res.json();
+        const container = document.getElementById('creatorsTableContainer');
+        if (!creators.length) { container.innerHTML = '<p>No creators found.</p>'; return; }
+
+        container.innerHTML = `<table class="data-table"><thead><tr><th>Username</th><th>Email</th><th>Display Name</th><th>Earnings</th><th>Verified</th><th>Joined</th><th>Actions</th></tr></thead><tbody>
+          ${creators.map(c => `<tr>
+            <td>${escapeHtml(c.username)}</td><td>${escapeHtml(c.email)}</td><td>${escapeHtml(c.display_name)}</td>
+            <td>${formatCurrency(c.total_earnings)}</td>
+            <td>${c.is_verified ? '<span class="status-badge status-approved">Verified</span>' : '-'}</td>
+            <td>${formatDate(c.created_at)}</td>
+            <td>
+              <button class="btn-small ${c.is_verified ? 'btn-secondary' : 'btn-success'}" onclick="toggleVerify('${c.id}')">${c.is_verified ? 'Unverify' : 'Verify'}</button>
+              <button class="btn-danger btn-small" onclick="deleteCreator('${c.id}')">Delete</button>
+            </td>
+          </tr>`).join('')}</tbody></table>`;
+      } catch (error) { showToast('Error loading creators', 'error'); }
+    }
+
+    async function loadContent() {
+      try {
+        const res = await fetch(`${API_URL}/admin/content`, { headers: { 'Authorization': `Bearer ${adminToken}` } });
+        const content = await res.json();
+        const container = document.getElementById('contentTableContainer');
+        if (!content.length) { container.innerHTML = '<p>No content found.</p>'; return; }
+
+        container.innerHTML = `<table class="data-table"><thead><tr><th>Title</th><th>Creator</th><th>Category</th><th>Price</th><th>Downloads</th><th>Uploaded</th><th>Actions</th></tr></thead><tbody>
+          ${content.map(item => `<tr>
+            <td>${escapeHtml(item.title)}</td><td>${escapeHtml(item.creator_name)}</td>
+            <td><span class="category-badge">${escapeHtml(item.category)}</span></td>
+            <td>${formatCurrency(item.price_zmw)}</td><td>${item.download_count}</td><td>${formatDate(item.created_at)}</td>
+            <td><button class="btn-danger btn-small" onclick="deleteContent('${item.id}')">Delete</button></td>
+          </tr>`).join('')}</tbody></table>`;
+      } catch (error) { showToast('Error loading content', 'error'); }
+    }
+
+    async function loadTransactions() {
+      try {
+        const res = await fetch(`${API_URL}/admin/transactions`, { headers: { 'Authorization': `Bearer ${adminToken}` } });
+        const txs = await res.json();
+        const container = document.getElementById('transactionsTableContainer');
+        if (!txs.length) { container.innerHTML = '<p>No transactions found.</p>'; return; }
+
+        container.innerHTML = `<table class="data-table"><thead><tr><th>Content</th><th>Creator</th><th>Amount</th><th>Fee</th><th>Method</th><th>Status</th><th>Date</th></tr></thead><tbody>
+          ${txs.map(tx => `<tr>
+            <td>${escapeHtml(tx.content_title)}</td><td>${escapeHtml(tx.creator_username)}</td>
+            <td>${formatCurrency(tx.amount_zmw)}</td><td>${formatCurrency(tx.platform_fee)}</td>
+            <td>${escapeHtml(tx.payment_method)}</td>
+            <td><span class="status-badge status-${tx.payment_status}">${tx.payment_status}</span></td>
+            <td>${formatDateTime(tx.created_at)}</td>
+          </tr>`).join('')}</tbody></table>`;
+      } catch (error) { showToast('Error loading transactions', 'error'); }
+    }
+
+    async function loadWithdrawals() {
+      try {
+        const res = await fetch(`${API_URL}/admin/withdrawals`, { headers: { 'Authorization': `Bearer ${adminToken}` } });
+        const items = await res.json();
+        const container = document.getElementById('withdrawalsTableContainer');
+        if (!items.length) { container.innerHTML = '<p>No withdrawal requests.</p>'; return; }
+
+        container.innerHTML = `<table class="data-table"><thead><tr><th>Creator</th><th>Amount</th><th>Method</th><th>Account</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead><tbody>
+          ${items.map(w => `<tr>
+            <td>${escapeHtml(w.creator?.displayName || w.creator?.username || 'Unknown')}</td>
+            <td>${formatCurrency(w.amount)}</td><td>${escapeHtml(w.method)}</td>
+            <td>${escapeHtml(w.accountDetails)}</td>
+            <td><span class="status-badge status-${w.status}">${w.status}</span></td>
+            <td>${formatDate(w.createdAt)}</td>
+            <td>${w.status === 'pending' ? `
+              <button class="btn-success btn-small" onclick="processWithdrawal('${w._id}', 'approved')">Approve</button>
+              <button class="btn-danger btn-small" onclick="processWithdrawal('${w._id}', 'rejected')">Reject</button>
+            ` : (w.processedAt ? formatDate(w.processedAt) : '-')}</td>
+          </tr>`).join('')}</tbody></table>`;
+      } catch (error) { /* ignore */ }
+    }
+
+    async function loadReports() {
+      try {
+        const res = await fetch(`${API_URL}/admin/reports`, { headers: { 'Authorization': `Bearer ${adminToken}` } });
+        const items = await res.json();
+        const container = document.getElementById('reportsTableContainer');
+        if (!items.length) { container.innerHTML = '<p>No reports.</p>'; return; }
+
+        container.innerHTML = `<table class="data-table"><thead><tr><th>Content</th><th>Reason</th><th>Description</th><th>Reporter</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead><tbody>
+          ${items.map(r => `<tr>
+            <td>${escapeHtml(r.content?.title || 'Deleted')}</td>
+            <td>${escapeHtml(r.reason)}</td>
+            <td>${escapeHtml(r.description || '-')}</td>
+            <td>${escapeHtml(r.reporterEmail || '-')}</td>
+            <td><span class="status-badge status-${r.status}">${r.status}</span></td>
+            <td>${formatDate(r.createdAt)}</td>
+            <td>${r.status === 'pending' ? `
+              <button class="btn-success btn-small" onclick="processReport('${r._id}', 'reviewed')">Review</button>
+              <button class="btn-secondary btn-small" onclick="processReport('${r._id}', 'dismissed')">Dismiss</button>
+            ` : '-'}</td>
+          </tr>`).join('')}</tbody></table>`;
+      } catch (error) { /* ignore */ }
+    }
+
+    async function toggleVerify(creatorId) {
+      try {
+        const res = await fetch(`${API_URL}/admin/creators/${creatorId}/verify`, {
+          method: 'PUT',
+          headers: { 'Authorization': `Bearer ${adminToken}` }
+        });
+        if (res.ok) { showToast('Creator verification updated', 'success'); loadCreators(); }
+      } catch (error) { showToast('Failed to update', 'error'); }
+    }
+
+    function deleteCreator(creatorId) {
+      showConfirmModal('Delete this creator and all their content?', async () => {
+        try {
+          const res = await fetch(`${API_URL}/admin/creators/${creatorId}`, {
+            method: 'DELETE', headers: { 'Authorization': `Bearer ${adminToken}` }
+          });
+          if (res.ok) { showToast('Creator deleted', 'success'); loadStats(); loadCreators(); loadContent(); }
+          else showToast('Delete failed', 'error');
+        } catch (error) { showToast('Delete failed', 'error'); }
+      });
+    }
+
+    function deleteContent(contentId) {
+      showConfirmModal('Delete this content?', async () => {
+        try {
+          const res = await fetch(`${API_URL}/admin/content/${contentId}`, {
+            method: 'DELETE', headers: { 'Authorization': `Bearer ${adminToken}` }
+          });
+          if (res.ok) { showToast('Content deleted', 'success'); loadStats(); loadContent(); }
+          else showToast('Delete failed', 'error');
+        } catch (error) { showToast('Delete failed', 'error'); }
+      });
+    }
+
+    async function processWithdrawal(id, status) {
+      try {
+        const res = await fetch(`${API_URL}/admin/withdrawals/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
+          body: JSON.stringify({ status })
+        });
+        if (res.ok) { showToast(`Withdrawal ${status}`, 'success'); loadWithdrawals(); loadCreators(); }
+        else showToast('Failed to process', 'error');
+      } catch (error) { showToast('Failed', 'error'); }
+    }
+
+    async function processReport(id, status) {
+      try {
+        const res = await fetch(`${API_URL}/admin/reports/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
+          body: JSON.stringify({ status })
+        });
+        if (res.ok) { showToast(`Report ${status}`, 'success'); loadReports(); }
+        else showToast('Failed', 'error');
+      } catch (error) { showToast('Failed', 'error'); }
+    }
+
+    const darkChartOpts = { color: '#9898B4', borderColor: '#2A2A42' };
+    const darkScales = { x: { ticks: { color: '#9898B4' }, grid: { color: '#1C1C30' } }, y: { ticks: { color: '#9898B4' }, grid: { color: '#1C1C30' } } };
+
+    function initAdminCharts() {
+      if (!platformStats) return;
+
+      const activity = (platformStats.recentActivity || []).reverse();
+      if (revenueChart) revenueChart.destroy();
+      revenueChart = new Chart(document.getElementById('revenueChart'), {
+        type: 'line',
+        data: {
+          labels: activity.map(a => a.date),
+          datasets: [{ label: 'Revenue (ZMW)', data: activity.map(a => a.revenue), borderColor: '#40E0D0', backgroundColor: 'rgba(64,224,208,0.1)', fill: true, tension: 0.3 }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, scales: darkScales, plugins: { title: { display: true, text: 'Revenue Trend', color: '#E8E8F0' }, legend: { labels: { color: '#9898B4' } } } }
+      });
+
+      const cats = platformStats.categoryStats || [];
+      if (categoryChart) categoryChart.destroy();
+      categoryChart = new Chart(document.getElementById('categoryChart'), {
+        type: 'doughnut',
+        data: {
+          labels: cats.map(c => c.category),
+          datasets: [{ data: cats.map(c => c.count), backgroundColor: ['#40E0D0', '#8B00FF', '#A855F7', '#00D4AA', '#0055DD', '#6BEBE0'] }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: 'Content by Category', color: '#E8E8F0' }, legend: { labels: { color: '#9898B4' } } } }
+      });
+
+      const top = platformStats.topCreators || [];
+      if (topCreatorsChart) topCreatorsChart.destroy();
+      topCreatorsChart = new Chart(document.getElementById('topCreatorsChart'), {
+        type: 'bar',
+        data: {
+          labels: top.map(c => c.displayName || c.username),
+          datasets: [{ label: 'Earnings (ZMW)', data: top.map(c => c.totalEarnings), backgroundColor: '#8B00FF' }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, scales: darkScales, plugins: { title: { display: true, text: 'Top Creators by Earnings', color: '#E8E8F0' }, legend: { labels: { color: '#9898B4' } } } }
+      });
+    }
+
+    function logout() {
+      localStorage.removeItem('adminToken');
+      localStorage.removeItem('adminData');
+      window.location.href = '/';
+    }
+  </script>
+</body>
+</html>

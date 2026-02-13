@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Creator Dashboard - IJB Innovative Ventures</title>
+  <meta name="description" content="Manage your digital content, track earnings, and grow your audience on IJB Innovative Ventures.">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="utils.js" defer></script>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container">
+      <div class="nav-brand">
+        <h1>IJB Innovative Ventures</h1>
+      </div>
+      <div class="nav-links">
+        <a href="/" class="nav-link">Browse</a>
+        <a href="/dashboard" class="nav-link active">Dashboard</a>
+        <a href="#" class="nav-link" onclick="logout()">Logout</a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container dashboard-container">
+    <div class="welcome-message">
+      <h2>Welcome back, <span id="creatorName"></span>!</h2>
+      <p>Manage your content and track your earnings</p>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <h3>Total Earnings</h3>
+        <div class="value" id="totalEarnings">ZMW 0.00</div>
+      </div>
+      <div class="stat-card">
+        <h3>Total Downloads</h3>
+        <div class="value" id="totalDownloads">0</div>
+      </div>
+      <div class="stat-card">
+        <h3>Uploaded Content</h3>
+        <div class="value" id="totalContent">0</div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab active" onclick="showDashTab('upload')">Upload Content</button>
+      <button class="tab" onclick="showDashTab('mycontent')">My Content</button>
+      <button class="tab" onclick="showDashTab('analytics')">Analytics</button>
+      <button class="tab" onclick="showDashTab('withdrawals')">Withdrawals</button>
+    </div>
+
+    <!-- Upload Tab -->
+    <div id="uploadTab" class="tab-content active">
+      <div class="section">
+        <h2>Upload New Content</h2>
+        <form onsubmit="handleUpload(event)" class="upload-form">
+          <div class="form-group">
+            <label>Title *</label>
+            <input type="text" id="uploadTitle" required />
+          </div>
+          <div class="form-group">
+            <label>Description</label>
+            <textarea id="uploadDescription" placeholder="Describe your content..."></textarea>
+          </div>
+          <div class="form-group">
+            <label>Category *</label>
+            <select id="uploadCategory" required>
+              <option value="">Select a category</option>
+              <option value="Music">Music</option>
+              <option value="Books">Books</option>
+              <option value="Art">Art</option>
+              <option value="Videos">Videos</option>
+              <option value="Documents">Documents</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Price (ZMW) *</label>
+            <input type="number" id="uploadPrice" min="1" value="2" required />
+          </div>
+          <div class="form-group">
+            <label>Content File *</label>
+            <div class="file-input-wrapper">
+              <label for="uploadFile" class="file-input-label">Choose File (Max 100MB)</label>
+              <input type="file" id="uploadFile" required onchange="updateFileName('uploadFile', 'fileName')" />
+            </div>
+            <div class="file-name" id="fileName">No file chosen</div>
+          </div>
+          <div class="form-group">
+            <label>Cover Image (optional)</label>
+            <div class="file-input-wrapper">
+              <label for="uploadThumbnail" class="file-input-label">Choose Cover Image</label>
+              <input type="file" id="uploadThumbnail" accept="image/*" onchange="updateFileName('uploadThumbnail', 'thumbnailName')" />
+            </div>
+            <div class="file-name" id="thumbnailName">No file chosen</div>
+          </div>
+          <div class="form-group">
+            <label>Preview File (optional - for music/video/image preview)</label>
+            <div class="file-input-wrapper">
+              <label for="uploadPreview" class="file-input-label">Choose Preview File</label>
+              <input type="file" id="uploadPreview" onchange="updateFileName('uploadPreview', 'previewName')" />
+            </div>
+            <div class="file-name" id="previewName">No file chosen</div>
+          </div>
+          <button type="submit" class="btn-primary btn-large">Upload Content</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- My Content Tab -->
+    <div id="mycontentTab" class="tab-content">
+      <div class="section">
+        <h2>My Content</h2>
+        <div class="table-wrapper" id="contentTableContainer">
+          <p class="loading">Loading your content...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Analytics Tab -->
+    <div id="analyticsTab" class="tab-content">
+      <div class="section">
+        <h2>Earnings & Performance</h2>
+        <div class="charts-grid">
+          <div class="chart-container">
+            <canvas id="earningsChart"></canvas>
+          </div>
+          <div class="chart-container">
+            <canvas id="downloadsChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Withdrawals Tab -->
+    <div id="withdrawalsTab" class="tab-content">
+      <div class="section">
+        <h2>Request Payout</h2>
+        <form onsubmit="handleWithdrawal(event)" class="withdrawal-form">
+          <div class="form-group">
+            <label>Amount (ZMW, min 5)</label>
+            <input type="number" id="withdrawAmount" min="5" step="0.01" required />
+          </div>
+          <div class="form-group">
+            <label>Method</label>
+            <select id="withdrawMethod" required>
+              <option value="">Select method</option>
+              <option value="MTN Mobile Money">MTN Mobile Money</option>
+              <option value="Airtel Money">Airtel Money</option>
+              <option value="Zamtel Money">Zamtel Money</option>
+              <option value="Bank Transfer">Bank Transfer</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Account Details (phone number or bank info)</label>
+            <input type="text" id="withdrawAccount" required placeholder="e.g. 0977123456" />
+          </div>
+          <button type="submit" class="btn-primary btn-large">Submit Withdrawal Request</button>
+        </form>
+      </div>
+      <div class="section">
+        <h2>Withdrawal History</h2>
+        <div id="withdrawalsList">
+          <p class="loading">Loading...</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-bottom">
+        <p>&copy; <span class="footer-year"></span> IJB Innovative Ventures. Empowering creators, one download at a time.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    const creatorToken = localStorage.getItem('creatorToken');
+    const creatorData = JSON.parse(localStorage.getItem('creatorData') || '{}');
+
+    if (!creatorToken) window.location.href = '/creator';
+
+    let earningsChart = null;
+    let downloadsChart = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('creatorName').textContent = creatorData.displayName || creatorData.username || '';
+      document.querySelectorAll('.footer-year').forEach(el => el.textContent = new Date().getFullYear());
+      loadStats();
+      loadMyContent();
+      loadWithdrawals();
+    });
+
+    function showDashTab(tabName) {
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.getElementById(tabName + 'Tab').classList.add('active');
+      event.target.classList.add('active');
+
+      if (tabName === 'analytics') initCharts();
+    }
+
+    async function loadStats() {
+      try {
+        const res = await fetch(`${API_URL}/creators/stats`, {
+          headers: { 'Authorization': `Bearer ${creatorToken}` }
+        });
+        const stats = await res.json();
+        document.getElementById('totalEarnings').textContent = formatCurrency(stats.totalEarnings);
+        document.getElementById('totalDownloads').textContent = stats.totalDownloads || 0;
+        document.getElementById('totalContent').textContent = stats.totalContent || 0;
+        window._creatorStats = stats;
+      } catch (error) {
+        showToast('Error loading stats', 'error');
+      }
+    }
+
+    async function loadMyContent() {
+      try {
+        const res = await fetch(`${API_URL}/content/my/uploads`, {
+          headers: { 'Authorization': `Bearer ${creatorToken}` }
+        });
+        const content = await res.json();
+        const container = document.getElementById('contentTableContainer');
+
+        if (!content.length) {
+          container.innerHTML = '<p style="color:var(--gray-600);">You haven\'t uploaded any content yet.</p>';
+          return;
+        }
+
+        container.innerHTML = `
+          <table class="content-table">
+            <thead>
+              <tr><th>Title</th><th>Category</th><th>Price</th><th>Downloads</th><th>Rating</th><th>Uploaded</th><th>Actions</th></tr>
+            </thead>
+            <tbody>
+              ${content.map(item => `
+                <tr>
+                  <td>${escapeHtml(item.title)}</td>
+                  <td><span class="category-badge">${escapeHtml(item.category)}</span></td>
+                  <td>${formatCurrency(item.price_zmw)}</td>
+                  <td>${item.download_count}</td>
+                  <td>${item.average_rating > 0 ? renderStars(item.average_rating, '0.8rem') : '-'}</td>
+                  <td>${formatDate(item.created_at)}</td>
+                  <td><button class="btn-danger btn-small" onclick="deleteContent('${item.id}')">Delete</button></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
+      } catch (error) {
+        showToast('Error loading content', 'error');
+      }
+    }
+
+    async function handleUpload(event) {
+      event.preventDefault();
+      const formData = new FormData();
+      formData.append('title', document.getElementById('uploadTitle').value);
+      formData.append('description', document.getElementById('uploadDescription').value);
+      formData.append('category', document.getElementById('uploadCategory').value);
+      formData.append('priceZmw', document.getElementById('uploadPrice').value);
+      formData.append('file', document.getElementById('uploadFile').files[0]);
+
+      const thumbFile = document.getElementById('uploadThumbnail').files[0];
+      if (thumbFile) formData.append('thumbnail', thumbFile);
+
+      const prevFile = document.getElementById('uploadPreview').files[0];
+      if (prevFile) formData.append('preview', prevFile);
+
+      try {
+        const res = await fetch(`${API_URL}/content/upload`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${creatorToken}` },
+          body: formData
+        });
+        const result = await res.json();
+        if (res.ok) {
+          showToast('Content uploaded successfully!', 'success');
+          event.target.reset();
+          ['fileName', 'thumbnailName', 'previewName'].forEach(id => {
+            document.getElementById(id).textContent = 'No file chosen';
+          });
+          loadStats();
+          loadMyContent();
+        } else {
+          showToast(result.error || 'Upload failed', 'error');
+        }
+      } catch (error) {
+        showToast('Upload failed. Please try again.', 'error');
+      }
+    }
+
+    function deleteContent(contentId) {
+      showConfirmModal('Are you sure you want to delete this content?', async () => {
+        try {
+          const res = await fetch(`${API_URL}/content/${contentId}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${creatorToken}` }
+          });
+          if (res.ok) {
+            showToast('Content deleted successfully', 'success');
+            loadStats();
+            loadMyContent();
+          } else {
+            const result = await res.json();
+            showToast(result.error || 'Delete failed', 'error');
+          }
+        } catch (error) {
+          showToast('Delete failed', 'error');
+        }
+      });
+    }
+
+    function updateFileName(inputId, displayId) {
+      const input = document.getElementById(inputId);
+      const display = document.getElementById(displayId);
+      display.textContent = input.files[0]?.name || 'No file chosen';
+    }
+
+    // Charts
+    const darkScales = { x: { ticks: { color: '#9898B4' }, grid: { color: '#1C1C30' } }, y: { ticks: { color: '#9898B4' }, grid: { color: '#1C1C30' } } };
+
+    async function initCharts() {
+      const stats = window._creatorStats;
+      if (!stats) return;
+
+      const activity = (stats.recentActivity || []).reverse();
+      const dates = activity.map(a => a.date);
+      const earnings = activity.map(a => a.earnings);
+
+      if (earningsChart) earningsChart.destroy();
+      earningsChart = new Chart(document.getElementById('earningsChart'), {
+        type: 'line',
+        data: {
+          labels: dates,
+          datasets: [{
+            label: 'Earnings (ZMW)',
+            data: earnings,
+            borderColor: '#40E0D0',
+            backgroundColor: 'rgba(64,224,208,0.1)',
+            fill: true,
+            tension: 0.3
+          }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, scales: darkScales, plugins: { title: { display: true, text: 'Earnings Trend', color: '#E8E8F0' }, legend: { labels: { color: '#9898B4' } } } }
+      });
+
+      const breakdown = stats.contentBreakdown || [];
+      if (downloadsChart) downloadsChart.destroy();
+      downloadsChart = new Chart(document.getElementById('downloadsChart'), {
+        type: 'bar',
+        data: {
+          labels: breakdown.map(b => b.title.substring(0, 20)),
+          datasets: [{
+            label: 'Downloads',
+            data: breakdown.map(b => b.downloadCount),
+            backgroundColor: '#8B00FF'
+          }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, scales: darkScales, plugins: { title: { display: true, text: 'Downloads per Content', color: '#E8E8F0' }, legend: { labels: { color: '#9898B4' } } } }
+      });
+    }
+
+    // Withdrawals
+    async function handleWithdrawal(event) {
+      event.preventDefault();
+      try {
+        const res = await fetch(`${API_URL}/creators/withdraw`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${creatorToken}`
+          },
+          body: JSON.stringify({
+            amount: parseFloat(document.getElementById('withdrawAmount').value),
+            method: document.getElementById('withdrawMethod').value,
+            accountDetails: document.getElementById('withdrawAccount').value
+          })
+        });
+        const result = await res.json();
+        if (res.ok) {
+          showToast('Withdrawal request submitted!', 'success');
+          event.target.reset();
+          loadWithdrawals();
+        } else {
+          showToast(result.error || 'Withdrawal failed', 'error');
+        }
+      } catch (error) {
+        showToast('Withdrawal failed', 'error');
+      }
+    }
+
+    async function loadWithdrawals() {
+      try {
+        const res = await fetch(`${API_URL}/creators/withdrawals`, {
+          headers: { 'Authorization': `Bearer ${creatorToken}` }
+        });
+        const withdrawals = await res.json();
+        const container = document.getElementById('withdrawalsList');
+
+        if (!withdrawals.length) {
+          container.innerHTML = '<p style="color:var(--gray-600);">No withdrawal requests yet.</p>';
+          return;
+        }
+
+        container.innerHTML = withdrawals.map(w => `
+          <div class="withdrawal-item">
+            <div>
+              <strong>${formatCurrency(w.amount)}</strong> via ${escapeHtml(w.method)}
+              <div style="font-size:0.8rem;color:var(--gray-600);">${formatDate(w.createdAt)}</div>
+            </div>
+            <span class="status-badge status-${w.status}">${w.status}</span>
+          </div>
+        `).join('');
+      } catch (error) { /* ignore */ }
+    }
+
+    function logout() {
+      localStorage.removeItem('creatorToken');
+      localStorage.removeItem('creatorData');
+      window.location.href = '/creator';
+    }
+  </script>
+</body>
+</html>

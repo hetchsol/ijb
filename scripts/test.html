@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>API Test</title>
+</head>
+<body>
+  <h1>Testing API Connection</h1>
+  <div id="result">Loading...</div>
+
+  <script>
+    console.log('Test page loaded');
+    console.log('API URL:', 'http://localhost:5000/api');
+
+    fetch('http://localhost:5000/api/content/browse')
+      .then(response => {
+        console.log('Response status:', response.status);
+        console.log('Response headers:', response.headers);
+        return response.json();
+      })
+      .then(data => {
+        console.log('Data received:', data);
+        document.getElementById('result').innerHTML =
+          '<h2>Success! Found ' + data.length + ' items</h2>' +
+          '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        document.getElementById('result').innerHTML =
+          '<h2>Error!</h2><p>' + error.message + '</p>';
+      });
+  </script>
+</body>
+</html>

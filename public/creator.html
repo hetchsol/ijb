@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Creator Portal - IJB Innovative Ventures</title>
+  <meta name="description" content="Join IJB Innovative Ventures as a creator. Upload your digital content and earn 85% on every download!">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="stylesheet" href="styles.css">
+  <script src="utils.js" defer></script>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container">
+      <div class="nav-brand">
+        <h1>IJB Innovative Ventures</h1>
+      </div>
+      <div class="nav-links">
+        <a href="/" class="nav-link">Browse</a>
+        <a href="/creator" class="nav-link active">For Creators</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="container">
+      <h2>Join Our Creator Community</h2>
+      <p>Upload your work and earn 85% on every download!</p>
+    </div>
+  </header>
+
+  <main class="container">
+    <div id="loginForm" class="auth-container">
+      <h2>Creator Login</h2>
+      <form onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label>Username</label>
+          <input type="text" id="loginUsername" required />
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="loginPassword" required />
+        </div>
+        <button type="submit" class="btn-primary btn-large">Login</button>
+        <div class="form-toggle">
+          Don't have an account? <a onclick="showRegisterForm()">Register here</a>
+        </div>
+        <div class="form-toggle">
+          <a onclick="showForgotForm()">Forgot password?</a>
+        </div>
+      </form>
+    </div>
+
+    <div id="registerForm" class="auth-container hidden">
+      <h2>Creator Registration</h2>
+      <form onsubmit="handleRegister(event)">
+        <div class="form-group">
+          <label>Username</label>
+          <input type="text" id="regUsername" required minlength="3" />
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="regEmail" required />
+        </div>
+        <div class="form-group">
+          <label>Display Name</label>
+          <input type="text" id="regDisplayName" />
+        </div>
+        <div class="form-group">
+          <label>Bio (Optional)</label>
+          <textarea id="regBio" placeholder="Tell us about yourself and your work..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>Password (min 6 characters)</label>
+          <input type="password" id="regPassword" required minlength="6" />
+        </div>
+        <div class="form-group">
+          <label>Confirm Password</label>
+          <input type="password" id="regConfirmPassword" required minlength="6" />
+        </div>
+        <button type="submit" class="btn-primary btn-large">Register</button>
+        <div class="form-toggle">
+          Already have an account? <a onclick="showLoginForm()">Login here</a>
+        </div>
+      </form>
+    </div>
+
+    <div id="forgotForm" class="auth-container hidden">
+      <h2>Forgot Password</h2>
+      <p style="margin-bottom:var(--space-lg);color:var(--gray-600);font-size:0.9rem;">Enter your email and we'll send you a reset link.</p>
+      <form onsubmit="handleForgot(event)">
+        <div class="form-group">
+          <label>Email Address</label>
+          <input type="email" id="forgotEmail" required />
+        </div>
+        <button type="submit" class="btn-primary btn-large">Send Reset Link</button>
+        <div class="form-toggle">
+          <a onclick="showLoginForm()">Back to login</a>
+        </div>
+      </form>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-bottom">
+        <p>&copy; <span class="footer-year"></span> IJB Innovative Ventures. Empowering creators, one download at a time.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    if (localStorage.getItem('creatorToken')) window.location.href = '/dashboard';
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('.footer-year').forEach(el => el.textContent = new Date().getFullYear());
+    });
+
+    function showRegisterForm() {
+      document.getElementById('loginForm').classList.add('hidden');
+      document.getElementById('forgotForm').classList.add('hidden');
+      document.getElementById('registerForm').classList.remove('hidden');
+    }
+
+    function showLoginForm() {
+      document.getElementById('registerForm').classList.add('hidden');
+      document.getElementById('forgotForm').classList.add('hidden');
+      document.getElementById('loginForm').classList.remove('hidden');
+    }
+
+    function showForgotForm() {
+      document.getElementById('loginForm').classList.add('hidden');
+      document.getElementById('registerForm').classList.add('hidden');
+      document.getElementById('forgotForm').classList.remove('hidden');
+    }
+
+    async function handleLogin(event) {
+      event.preventDefault();
+      try {
+        const res = await fetch(`${API_URL}/creators/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username: document.getElementById('loginUsername').value,
+            password: document.getElementById('loginPassword').value
+          })
+        });
+        const result = await res.json();
+        if (res.ok) {
+          localStorage.setItem('creatorToken', result.token);
+          localStorage.setItem('creatorData', JSON.stringify(result.creator));
+          window.location.href = '/dashboard';
+        } else {
+          showToast(result.error || 'Login failed', 'error');
+        }
+      } catch (error) {
+        showToast('Login failed. Please try again.', 'error');
+      }
+    }
+
+    async function handleRegister(event) {
+      event.preventDefault();
+      const password = document.getElementById('regPassword').value;
+      const confirm = document.getElementById('regConfirmPassword').value;
+      if (password !== confirm) { showToast('Passwords do not match', 'warning'); return; }
+
+      try {
+        const res = await fetch(`${API_URL}/creators/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username: document.getElementById('regUsername').value,
+            email: document.getElementById('regEmail').value,
+            displayName: document.getElementById('regDisplayName').value,
+            bio: document.getElementById('regBio').value,
+            password
+          })
+        });
+        const result = await res.json();
+        if (res.ok) {
+          localStorage.setItem('creatorToken', result.token);
+          localStorage.setItem('creatorData', JSON.stringify(result.creator));
+          window.location.href = '/dashboard';
+        } else {
+          showToast(result.error || 'Registration failed', 'error');
+        }
+      } catch (error) {
+        showToast('Registration failed. Please try again.', 'error');
+      }
+    }
+
+    async function handleForgot(event) {
+      event.preventDefault();
+      showToast('If an account with that email exists, a reset link has been sent.', 'info');
+      showLoginForm();
+    }
+  </script>
+</body>
+</html>

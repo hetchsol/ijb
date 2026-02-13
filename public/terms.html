@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Terms of Service - IJB Innovative Ventures</title>
+  <meta name="description" content="Terms of Service for IJB Innovative Ventures digital marketplace.">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="stylesheet" href="styles.css">
+  <script src="utils.js" defer></script>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container">
+      <div class="nav-brand"><h1>IJB Innovative Ventures</h1></div>
+      <div class="nav-links">
+        <a href="/" class="nav-link">Browse</a>
+        <a href="/creator" class="nav-link">For Creators</a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container" style="padding:var(--space-2xl) var(--space-xl);">
+    <div class="section" style="max-width:800px;margin:0 auto;">
+      <h1 style="font-size:1.8rem;margin-bottom:var(--space-xl);">Terms of Service</h1>
+      <p style="color:var(--gray-600);margin-bottom:var(--space-xl);">Last updated: <span class="current-year"></span></p>
+
+      <h2 style="font-size:1.2rem;margin:var(--space-xl) 0 var(--space-md);">1. Acceptance of Terms</h2>
+      <p>By accessing and using IJB Innovative Ventures ("the Platform"), you agree to be bound by these Terms of Service. If you do not agree, please do not use the Platform.</p>
+
+      <h2 style="font-size:1.2rem;margin:var(--space-xl) 0 var(--space-md);">2. Platform Description</h2>
+      <p>IJB Innovative Ventures is a digital marketplace that allows creators to upload and sell digital content, and buyers to purchase and download that content. The Platform operates primarily in Zambia and accepts payments via mobile money and card.</p>
+
+      <h2 style="font-size:1.2rem;margin:var(--space-xl) 0 var(--space-md);">3. Creator Accounts</h2>
+      <p>Creators must provide accurate registration information. You are responsible for maintaining the security of your account. Creators retain ownership of their uploaded content. By uploading content, you grant IJB Innovative Ventures a license to display, distribute, and sell the content on the Platform.</p>
+
+      <h2 style="font-size:1.2rem;margin:var(--space-xl) 0 var(--space-md);">4. Revenue Sharing</h2>
+      <p>Creators receive 85% of each sale. The Platform retains 15% as a service fee. Payouts are processed upon creator request, subject to a minimum withdrawal amount of ZMW 5.</p>
+
+      <h2 style="font-size:1.2rem;margin:var(--space-xl) 0 var(--space-md);">5. Purchases & Downloads</h2>
+      <p>All purchases are final. Download tokens are valid for 24 hours and allow up to 3 downloads per purchase. The Platform does not store card details; payments are processed by third-party payment providers.</p>
+
+      <h2 style="font-size:1.2rem;margin:var(--space-xl) 0 var(--space-md);">6. Prohibited Content</h2>
+      <p>Users may not upload content that infringes copyright, contains malware, is illegal, or violates the rights of others. The Platform reserves the right to remove content and suspend accounts that violate these terms.</p>
+
+      <h2 style="font-size:1.2rem;margin:var(--space-xl) 0 var(--space-md);">7. Limitation of Liability</h2>
+      <p>The Platform is provided "as is." IJB Innovative Ventures is not liable for any indirect, incidental, or consequential damages arising from use of the Platform.</p>
+
+      <h2 style="font-size:1.2rem;margin:var(--space-xl) 0 var(--space-md);">8. Changes to Terms</h2>
+      <p>We may update these terms from time to time. Continued use of the Platform after changes constitutes acceptance of the new terms.</p>
+
+      <h2 style="font-size:1.2rem;margin:var(--space-xl) 0 var(--space-md);">9. Contact</h2>
+      <p>For questions about these terms, contact us at info@ijbventures.com.</p>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-bottom"><p>&copy; <span class="footer-year"></span> IJB Innovative Ventures. All rights reserved.</p></div>
+    </div>
+  </footer>
+  <script>
+    document.querySelectorAll('.footer-year, .current-year').forEach(el => el.textContent = new Date().getFullYear());
+  </script>
+</body>
+</html>
