@@ -1,6 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const { body, validationResult } = require('express-validator');
@@ -12,6 +13,43 @@ const Withdrawal = require('../models/Withdrawal');
 const Report = require('../models/Report');
 
 const router = express.Router();
+
+// Configure multer for admin uploads (same as content.js)
+const uploadsDir = path.join(__dirname, '..', 'uploads');
+const thumbnailsDir = path.join(__dirname, '..', 'public', 'thumbnails');
+if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+if (!fs.existsSync(thumbnailsDir)) fs.mkdirSync(thumbnailsDir, { recursive: true });
+
+const adminStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    if (file.fieldname === 'thumbnail') {
+      cb(null, thumbnailsDir);
+    } else {
+      cb(null, uploadsDir);
+    }
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const adminUpload = multer({
+  storage: adminStorage,
+  limits: { fileSize: 100 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = /jpeg|jpg|png|gif|pdf|doc|docx|mp3|mp4|wav|avi|mov|zip|rar|txt|epub|mobi|webp/;
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    if (extname) return cb(null, true);
+    cb(new Error('Invalid file type'));
+  }
+});
+
+const adminUploadFields = adminUpload.fields([
+  { name: 'file', maxCount: 1 },
+  { name: 'thumbnail', maxCount: 1 },
+  { name: 'preview', maxCount: 1 }
+]);
 
 // Middleware to verify admin JWT token
 const authenticateAdmin = (req, res, next) => {
@@ -199,10 +237,14 @@ router.get('/content', authenticateAdmin, async (req, res) => {
     const mapped = content.map(item => ({
       id: item._id,
       title: item.title,
+      description: item.description || '',
       category: item.category,
       price_zmw: item.priceZmw,
       download_count: item.downloadCount,
+      is_featured: item.isFeatured || false,
+      sort_order: item.sortOrder || 0,
       created_at: item.createdAt,
+      creator_id: item.creator?._id || null,
       creator_username: item.creator?.username || 'Deleted',
       creator_name: item.creator?.displayName || 'Deleted'
     }));
@@ -235,6 +277,133 @@ router.delete('/content/:id', authenticateAdmin, async (req, res) => {
     res.json({ message: 'Content deleted successfully' });
   } catch (error) {
     res.status(500).json({ error: 'Failed to delete content' });
+  }
+});
+
+// Admin upload content
+router.post('/content/upload', authenticateAdmin, adminUploadFields, async (req, res) => {
+  if (!req.files || !req.files.file) {
+    return res.status(400).json({ error: 'No file uploaded' });
+  }
+
+  const { title, description, category, priceZmw, creatorId } = req.body;
+
+  if (!title || !title.trim()) {
+    Object.values(req.files).flat().forEach(f => {
+      if (fs.existsSync(f.path)) fs.unlinkSync(f.path);
+    });
+    return res.status(400).json({ error: 'Title is required' });
+  }
+
+  if (!creatorId) {
+    Object.values(req.files).flat().forEach(f => {
+      if (fs.existsSync(f.path)) fs.unlinkSync(f.path);
+    });
+    return res.status(400).json({ error: 'Creator is required' });
+  }
+
+  try {
+    const creator = await Creator.findById(creatorId);
+    if (!creator) {
+      Object.values(req.files).flat().forEach(f => {
+        if (fs.existsSync(f.path)) fs.unlinkSync(f.path);
+      });
+      return res.status(404).json({ error: 'Creator not found' });
+    }
+
+    const mainFile = req.files.file[0];
+    const thumbnailFile = req.files.thumbnail ? req.files.thumbnail[0] : null;
+    const previewFile = req.files.preview ? req.files.preview[0] : null;
+
+    const content = await Content.create({
+      creator: creatorId,
+      title: title.trim(),
+      description: description || '',
+      filePath: mainFile.filename,
+      fileName: mainFile.originalname,
+      fileSize: mainFile.size,
+      category: category || 'Other',
+      priceZmw: Math.max(1, parseInt(priceZmw) || 2),
+      thumbnailPath: thumbnailFile ? thumbnailFile.filename : null,
+      previewPath: previewFile ? previewFile.filename : null
+    });
+
+    res.status(201).json({
+      message: 'Content uploaded successfully',
+      content: {
+        id: content._id,
+        title: content.title,
+        category: content.category,
+        priceZmw: content.priceZmw
+      }
+    });
+  } catch (error) {
+    Object.values(req.files).flat().forEach(f => {
+      if (fs.existsSync(f.path)) fs.unlinkSync(f.path);
+    });
+    res.status(500).json({ error: 'Failed to upload content' });
+  }
+});
+
+// Edit content metadata
+router.put('/content/:id', authenticateAdmin, [
+  body('title').optional().trim().notEmpty(),
+  body('category').optional().isIn(['Music', 'Books', 'Art', 'Videos', 'Documents', 'Other']),
+  body('priceZmw').optional().isInt({ min: 1 })
+], async (req, res) => {
+  try {
+    const content = await Content.findById(req.params.id);
+    if (!content) {
+      return res.status(404).json({ error: 'Content not found' });
+    }
+
+    const { title, description, category, priceZmw } = req.body;
+    if (title !== undefined) content.title = title.trim();
+    if (description !== undefined) content.description = description;
+    if (category !== undefined) content.category = category;
+    if (priceZmw !== undefined) content.priceZmw = Math.max(1, parseInt(priceZmw));
+
+    await content.save();
+    res.json({ message: 'Content updated successfully', content: { id: content._id, title: content.title, category: content.category, priceZmw: content.priceZmw } });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update content' });
+  }
+});
+
+// Toggle featured status
+router.put('/content/:id/featured', authenticateAdmin, async (req, res) => {
+  try {
+    const content = await Content.findById(req.params.id);
+    if (!content) {
+      return res.status(404).json({ error: 'Content not found' });
+    }
+    content.isFeatured = !content.isFeatured;
+    await content.save();
+    res.json({ message: `Content ${content.isFeatured ? 'featured' : 'unfeatured'}`, isFeatured: content.isFeatured });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to toggle featured status' });
+  }
+});
+
+// Set sort order
+router.put('/content/:id/order', authenticateAdmin, [
+  body('sortOrder').isInt({ min: 0 })
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ error: 'Sort order must be a non-negative integer' });
+  }
+
+  try {
+    const content = await Content.findById(req.params.id);
+    if (!content) {
+      return res.status(404).json({ error: 'Content not found' });
+    }
+    content.sortOrder = parseInt(req.body.sortOrder);
+    await content.save();
+    res.json({ message: 'Sort order updated', sortOrder: content.sortOrder });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update sort order' });
   }
 });
 

@@ -17,7 +17,9 @@ const contentSchema = new mongoose.Schema({
   previewPath: { type: String },
   downloadCount: { type: Number, default: 0 },
   averageRating: { type: Number, default: 0 },
-  reviewCount: { type: Number, default: 0 }
+  reviewCount: { type: Number, default: 0 },
+  isFeatured: { type: Boolean, default: false },
+  sortOrder: { type: Number, default: 0 }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Content', contentSchema);

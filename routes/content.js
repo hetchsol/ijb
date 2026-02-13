@@ -133,15 +133,15 @@ router.get('/browse', async (req, res) => {
       filter.averageRating = { $gte: parseFloat(minRating) };
     }
 
-    // Sort options
-    let sortOption = { createdAt: -1 };
+    // Sort options — featured items always appear first
+    let sortOption = { isFeatured: -1, sortOrder: 1, createdAt: -1 };
     switch (sort) {
-      case 'popular': sortOption = { downloadCount: -1 }; break;
-      case 'price_low': sortOption = { priceZmw: 1 }; break;
-      case 'price_high': sortOption = { priceZmw: -1 }; break;
-      case 'rating': sortOption = { averageRating: -1 }; break;
+      case 'popular': sortOption = { isFeatured: -1, downloadCount: -1 }; break;
+      case 'price_low': sortOption = { isFeatured: -1, priceZmw: 1 }; break;
+      case 'price_high': sortOption = { isFeatured: -1, priceZmw: -1 }; break;
+      case 'rating': sortOption = { isFeatured: -1, averageRating: -1 }; break;
       case 'newest':
-      default: sortOption = { createdAt: -1 };
+      default: sortOption = { isFeatured: -1, sortOrder: 1, createdAt: -1 };
     }
 
     const pageNum = Math.max(1, parseInt(page));
