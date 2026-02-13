@@ -30,9 +30,23 @@
   </nav>
 
   <header class="hero">
-    <div class="container">
+    <div class="hero-slideshow">
+      <div class="hero-slide active" style="background-image:url('images/img1.jpg')"></div>
+      <div class="hero-slide" style="background-image:url('images/img2.jpg')"></div>
+      <div class="hero-slide" style="background-image:url('images/img3.jpg')"></div>
+      <div class="hero-slide" style="background-image:url('images/img4.jpg')"></div>
+      <div class="hero-slide" style="background-image:url('images/img5.jpg')"></div>
+      <div class="hero-slide" style="background-image:url('images/img6.jpg')"></div>
+      <div class="hero-slide" style="background-image:url('images/img7.jpg')"></div>
+      <div class="hero-slide" style="background-image:url('images/img8.jpg')"></div>
+      <div class="hero-slide" style="background-image:url('images/img9.jpg')"></div>
+      <div class="hero-slide" style="background-image:url('images/img10.jpg')"></div>
+    </div>
+    <div class="hero-overlay"></div>
+    <div class="container hero-content">
       <h2>Discover Amazing Digital Content</h2>
       <p>Support Zambian creators directly &mdash; Download music, books, art, and more starting from ZMW 1.00</p>
+      <div class="hero-dots" id="heroDots"></div>
     </div>
   </header>
 
@@ -327,6 +341,49 @@
     </div>
   </footer>
 
-  <script>document.getElementById('footerYear').textContent = new Date().getFullYear();</script>
+  <script>
+    document.getElementById('footerYear').textContent = new Date().getFullYear();
+
+    // Hero slideshow
+    (function() {
+      const slides = document.querySelectorAll('.hero-slide');
+      const dotsContainer = document.getElementById('heroDots');
+      if (!slides.length || !dotsContainer) return;
+
+      let current = 0;
+      let interval;
+
+      // Create dots
+      slides.forEach((_, i) => {
+        const dot = document.createElement('button');
+        dot.className = 'hero-dot' + (i === 0 ? ' active' : '');
+        dot.setAttribute('aria-label', 'Slide ' + (i + 1));
+        dot.onclick = () => goToSlide(i);
+        dotsContainer.appendChild(dot);
+      });
+
+      const dots = dotsContainer.querySelectorAll('.hero-dot');
+
+      function goToSlide(index) {
+        slides[current].classList.remove('active');
+        dots[current].classList.remove('active');
+        current = index;
+        slides[current].classList.add('active');
+        dots[current].classList.add('active');
+        resetInterval();
+      }
+
+      function nextSlide() {
+        goToSlide((current + 1) % slides.length);
+      }
+
+      function resetInterval() {
+        clearInterval(interval);
+        interval = setInterval(nextSlide, 5000);
+      }
+
+      resetInterval();
+    })();
+  </script>
 </body>
 </html>
