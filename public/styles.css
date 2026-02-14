@@ -1556,6 +1556,17 @@ body {
   font-size: 1rem;
 }
 
+/* ======================== ADMIN UPLOAD FORM ======================== */
+.admin-upload-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-md);
+}
+
+.admin-upload-full {
+  grid-column: 1 / -1;
+}
+
 /* ======================== RESPONSIVE ======================== */
 @media (max-width: 768px) {
   .container {
@@ -1596,11 +1607,29 @@ body {
   }
 
   .hero {
-    min-height: 260px;
+    min-height: 220px;
   }
 
   .hero-content {
-    padding: var(--space-2xl) 0;
+    padding: var(--space-xl) 0;
+  }
+
+  .hero p {
+    font-size: 0.95rem;
+    padding: 0 var(--space-sm);
+  }
+
+  .hero-dots {
+    margin-top: var(--space-md);
+  }
+
+  .hero-dot {
+    width: 8px;
+    height: 8px;
+  }
+
+  .hero-slide {
+    background-position: center center;
   }
 
   .search-bar {
@@ -1636,11 +1665,14 @@ body {
 
   .tabs {
     gap: 0;
+    flex-wrap: wrap;
   }
 
   .tab {
     padding: var(--space-sm) var(--space-md);
     font-size: 0.85rem;
+    flex: 1 1 auto;
+    min-width: fit-content;
   }
 
   .sort-controls {
@@ -1650,6 +1682,49 @@ body {
 
   .detail-meta {
     grid-template-columns: 1fr;
+  }
+
+  /* Admin upload form: single column on mobile */
+  .admin-upload-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-upload-full {
+    grid-column: auto;
+  }
+
+  /* Admin tables: ensure horizontal scroll and min-width */
+  .data-table {
+    min-width: 700px;
+  }
+
+  .data-table th,
+  .data-table td {
+    padding: 0.6rem var(--space-sm);
+    font-size: 0.8rem;
+    white-space: nowrap;
+  }
+
+  /* Admin buttons: touch-friendly sizing */
+  .btn-small {
+    padding: 0.4rem 0.7rem;
+    font-size: 0.75rem;
+  }
+
+  .btn-primary,
+  .btn-secondary {
+    padding: 0.6rem 1.2rem;
+    font-size: 0.9rem;
+  }
+
+  /* Confirm dialog for mobile */
+  .confirm-dialog {
+    width: 95%;
+    padding: var(--space-lg);
+  }
+
+  .confirm-dialog .form-group {
+    margin-bottom: var(--space-sm);
   }
 }
 
@@ -1664,5 +1739,21 @@ body {
 
   .card-details-row {
     grid-template-columns: 1fr;
+  }
+
+  .hero h2 {
+    font-size: 1.4rem;
+  }
+
+  .hero {
+    min-height: 180px;
+  }
+
+  .hero-content {
+    padding: var(--space-lg) 0;
+  }
+
+  .hero p {
+    font-size: 0.85rem;
   }
 }

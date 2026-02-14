@@ -58,7 +58,7 @@
           <button onclick="toggleUploadForm()" style="position:absolute;top:12px;right:16px;background:none;border:none;color:var(--white);font-size:1.5rem;cursor:pointer;padding:0 4px;line-height:1;opacity:0.7;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.7'">&times;</button>
           <h3 style="margin-bottom:var(--space-md);">Upload New Content</h3>
           <form id="adminContentForm" onsubmit="adminUploadContent(event)">
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:var(--space-md);">
+            <div class="admin-upload-grid">
               <div class="form-group">
                 <label>Creator *</label>
                 <select id="uploadCreator" required class="form-control"><option value="">Select Creator...</option></select>
@@ -67,7 +67,7 @@
                 <label>Title *</label>
                 <input type="text" id="uploadTitle" required class="form-control" placeholder="Content title">
               </div>
-              <div class="form-group" style="grid-column:1/-1;">
+              <div class="form-group admin-upload-full">
                 <label>Description</label>
                 <textarea id="uploadDescription" class="form-control" rows="2" placeholder="Optional description"></textarea>
               </div>
